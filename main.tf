@@ -38,7 +38,7 @@ resource "cloudflare_record" "dkim3" {
 resource "cloudflare_record" "spf" {
   zone_id = var.zone_id
   name    = "@"
-  value   = "v=spf1 include:spf.messagingengine.com -all"
+  value   = "v=spf1 ${join(" ", concat(["include:spf.messagingengine.com"], var.spf_terms, ["-all"]))}"
   type    = "TXT"
 }
 
