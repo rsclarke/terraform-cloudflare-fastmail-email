@@ -1,0 +1,19 @@
+name: pr
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.5
+          terraform_wrapper: false
+      - id: fmt
+        run: terraform fmt -check -recursive
+      - id: init
+        run: terraform init
+      - id: validate
+        run: terraform validate
