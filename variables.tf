@@ -37,3 +37,14 @@ variable "dmarc_ruf" {
     error_message = "Must be a valid email address."
   }
 }
+
+variable "spf_terms" {
+  type        = list(string)
+  description = "Additional SPF terms to include, `include:spf.messagingengine.com -all` are already provided"
+  default     = []
+
+  validation {
+    condition     = can([for term in var.spf_terms : regex("^(\\+|-|\\?|~)?(all|include|a|mx|ip4|ip6|exists)", term)])
+    error_message = "SPF term must start with a valid qualifier (optional) or mechanism."
+  }
+}

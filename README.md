@@ -22,6 +22,7 @@ module {
 
   dmarc_rua = ["dmarc_rua@example.net"]
   dmarc_ruf = ["dmarc_ruf@example.net", "dmarc_ruf@example.org"]
+  spf_terms = ["-ip4:192.0.2.0/24", "+ip6:2001:DB8::/32"]
 }
 ```
 
@@ -46,6 +47,7 @@ module {
 | zone_name | Cloudflare Zone Name | `string` | yes |
 | dmarc_rua | Email addresses for DMARC Aggregate reports (excluding `mailto:`), at least one and contains the `@` symbol. | `list(string)` | yes |
 | dmarc_rua | Email addresses for DMARC Failure (or Forensic) reports (excluding `mailto:`), at least one and contains the `@` symbol. | `list(string)` | yes |
+| spf_terms | Additional SPF terms to include, `include:spf.messagingengine.com -all` are already provided. | `list(string)` | no |
 
 ## Outputs
 
