@@ -48,3 +48,16 @@ resource "cloudflare_record" "dmarc" {
   value   = "v=DMARC1; p=reject; rua=mailto:${join(",mailto:", var.dmarc_rua)}; ruf=mailto:${join(",mailto:", var.dmarc_ruf)}; fo=1:d:s"
   type    = "TXT"
 }
+
+module "mta_sts" {
+  source  = "rsclarke/mta-sts/cloudflare"
+  version = "~> 1.0.0"
+
+  zone_id   = var.zone_id
+  zone_name = var.zone_name
+
+  mode    = var.mta_sts_mode
+  mx      = concat([cloudflare_record.mx1.value, cloudflare_record.mx2.value], var.mta_sts_mx)
+  max_age = var.mta_sts_max_age
+  rua     = var.tlsrpt_rua
+}
