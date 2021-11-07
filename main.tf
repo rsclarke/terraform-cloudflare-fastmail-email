@@ -51,7 +51,7 @@ resource "cloudflare_record" "dmarc" {
 
 module "mta_sts" {
   source  = "rsclarke/mta-sts/cloudflare"
-  version = "~> 1.0.0"
+  version = "~> 1.1.0"
 
   zone_id   = var.zone_id
   zone_name = var.zone_name
