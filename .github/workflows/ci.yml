@@ -1,0 +1,21 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: rsclarke/setup-tenv@7f3b368cfce781a1f9d74c0546b954eaeac945c5 # v1.0.0
+        with:
+          tool: terraform
+          tool-version: 1.14.7
+      - id: fmt
+        run: terraform fmt -check -recursive
+      - id: init
+        run: terraform init
+      - id: validate
+        run: terraform validate
