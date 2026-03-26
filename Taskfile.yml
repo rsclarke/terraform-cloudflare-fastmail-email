@@ -1,0 +1,109 @@
+version: "3"
+
+vars:
+  RELEASE_BRANCH: '{{default "main" .RELEASE_BRANCH}}'
+  CURRENT_VERSION:
+    sh: git describe --tags --match 'v*.*.*' --abbrev=0 2>/dev/null || echo "v0.0.0"
+  MAJOR:
+    sh: echo "{{.CURRENT_VERSION}}" | sed -E 's/v([0-9]+)\.[0-9]+\.[0-9]+/\1/'
+  MINOR:
+    sh: echo "{{.CURRENT_VERSION}}" | sed -E 's/v[0-9]+\.([0-9]+)\.[0-9]+/\1/'
+  PATCH:
+    sh: echo "{{.CURRENT_VERSION}}" | sed -E 's/v[0-9]+\.[0-9]+\.([0-9]+)/\1/'
+  NEXT_PATCH:
+    sh: echo $(({{.PATCH}} + 1))
+  NEXT_MINOR:
+    sh: echo $(({{.MINOR}} + 1))
+  NEXT_MAJOR:
+    sh: echo $(({{.MAJOR}} + 1))
+
+  NEW_PATCH_VERSION: "v{{.MAJOR}}.{{.MINOR}}.{{.NEXT_PATCH}}"
+  NEW_MINOR_VERSION: "v{{.MAJOR}}.{{.NEXT_MINOR}}.0"
+  NEW_MAJOR_VERSION: "v{{.NEXT_MAJOR}}.0.0"
+
+tasks:
+  _preflight:
+    internal: true
+    desc: Validate branch and remote state before releasing
+    cmds:
+      - |
+        branch=$(git symbolic-ref --quiet --short HEAD) || {
+          echo "Refusing to release from detached HEAD"; exit 1
+        }
+        [ "$branch" = "{{.RELEASE_BRANCH}}" ] || {
+          echo "Refusing to release from '$branch' (expected {{.RELEASE_BRANCH}})"; exit 1
+        }
+      - git fetch origin --tags --prune
+      - |
+        [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/{{.RELEASE_BRANCH}})" ] || {
+          echo "Refusing to release: HEAD is not at origin/{{.RELEASE_BRANCH}}"; exit 1
+        }
+
+  _tag:create:
+    internal: true
+    desc: Helper to create and push a git tag
+    cmds:
+      - git tag -s "{{.TAG}}" -m "{{.MESSAGE}}"
+      - git push origin "{{.TAG}}"
+
+  version:patch:
+    desc: Create a new patch version tag
+    cmds:
+      - task: _preflight
+      - task: _tag:create
+        vars:
+          TAG: "{{.NEW_PATCH_VERSION}}"
+          MESSAGE: "Release {{.NEW_PATCH_VERSION}}"
+
+  version:minor:
+    desc: Create a new minor version tag
+    cmds:
+      - task: _preflight
+      - task: _tag:create
+        vars:
+          TAG: "{{.NEW_MINOR_VERSION}}"
+          MESSAGE: "Release {{.NEW_MINOR_VERSION}}"
+
+  version:major:
+    desc: Create a new major version tag
+    cmds:
+      - task: _preflight
+      - task: _tag:create
+        vars:
+          TAG: "{{.NEW_MAJOR_VERSION}}"
+          MESSAGE: "Release {{.NEW_MAJOR_VERSION}}"
+
+  release:tag:
+    desc: Create a GitHub release for a specific tag
+    requires:
+      vars: [TAG]
+    cmds:
+      - gh release create "{{.TAG}}" --verify-tag --title "{{.TAG}}" --generate-notes
+
+  release:latest:
+    desc: Create a GitHub release for the latest tag
+    vars:
+      LATEST_TAG:
+        sh: git describe --tags --match 'v*.*.*' --abbrev=0
+    cmds:
+      - task: release:tag
+        vars:
+          TAG: "{{.LATEST_TAG}}"
+
+  release:patch:
+    desc: Create a new patch version and release it on GitHub
+    cmds:
+      - task: version:patch
+      - task: release:latest
+
+  release:minor:
+    desc: Create a new minor version and release it on GitHub
+    cmds:
+      - task: version:minor
+      - task: release:latest
+
+  release:major:
+    desc: Create a new major version and release it on GitHub
+    cmds:
+      - task: version:major
+      - task: release:latest
