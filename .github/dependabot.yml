@@ -7,3 +7,5 @@ updates:
       day: "friday"
       time: "08:00"
       timezone: "Australia/Perth"
+    cooldown:
+      default-days: 7
