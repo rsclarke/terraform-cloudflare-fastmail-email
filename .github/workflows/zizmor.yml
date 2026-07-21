@@ -2,8 +2,12 @@ name: Run zizmor
 
 on:
   pull_request:
+    paths:
+      - .github/**
   push:
     branches: [main]
+    paths:
+      - .github/**
 
 permissions: {}
 
